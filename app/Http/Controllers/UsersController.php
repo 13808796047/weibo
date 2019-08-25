@@ -13,6 +13,7 @@ class UsersController extends Controller
         $this->middleware('guest', ['only' => ['create']]);
         $this->middleware('auth', ['except' => ['show', 'create', 'store', 'index', 'confirmEmail']]);
     }
+
     public function confirmEmail($token)
     {
         $user = User::where('activation_token', $token)->firstOrFail();
@@ -23,19 +24,24 @@ class UsersController extends Controller
         session()->flash('success', '恭喜您，激活成功!');
         return redirect()->route('users.show', compact('user'));
     }
+
     public function index()
     {
         $users = User::paginate();
         return view('users.index', compact('users'));
     }
+
     public function create()
     {
         return view('users.create');
     }
+
     public function show(User $user)
     {
-        return view('users.show', compact('user'));
+        $statuses = $user->statuses()->orderBy('created_at', 'desc')->paginate();
+        return view('users.show', compact('user', 'statuses'));
     }
+
     public function store(Request $request)
     {
         $this->validate($request, [
@@ -53,11 +59,13 @@ class UsersController extends Controller
         session()->flash('success', '验证邮件已经发送到你的注册邮箱上，请注意查收');
         return redirect('/');
     }
+
     public function edit(User $user)
     {
         $this->authorize('update', $user);
         return view('users.edit', compact('user'));
     }
+
     public function update(User $user, Request $request)
     {
         $this->authorize('update', $user);
@@ -75,6 +83,7 @@ class UsersController extends Controller
         session()->flash('success', '个人资料更新成功!');
         return redirect()->route('users.show', $user->id);
     }
+
     public function destroy(User $user)
     {
         $this->authorize('destroy', $user);
@@ -82,6 +91,7 @@ class UsersController extends Controller
         session()->flash('success', '成功删除用户!');
         return back();
     }
+
     public function sendEmailConfirmationTo($user)
     {
         $view = 'emails.confirm';
